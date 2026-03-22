@@ -148,6 +148,20 @@ export function useGatewayConnection({ url, token }: UseGatewayConnectionOptions
       }
     });
 
+    ws.onEvent("board_query_start", (frame: GatewayEventFrame) => {
+      const payload = frame.payload as { agent_id?: string };
+      if (payload?.agent_id) {
+        useOfficeStore.getState().boardQueryStart(payload.agent_id);
+      }
+    });
+
+    ws.onEvent("board_query_end", (frame: GatewayEventFrame) => {
+      const payload = frame.payload as { agent_id?: string };
+      if (payload?.agent_id) {
+        useOfficeStore.getState().boardQueryEnd(payload.agent_id);
+      }
+    });
+
     ws.connect(url, token);
 
     return () => {

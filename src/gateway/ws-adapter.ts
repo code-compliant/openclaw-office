@@ -51,6 +51,8 @@ export class WsAdapter implements GatewayAdapter {
     "heartbeat",
     "cron",
     "shutdown",
+    "board_query_start",
+    "board_query_end",
   ] as const;
 
   async connect(): Promise<void> {
