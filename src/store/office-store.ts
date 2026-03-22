@@ -3,6 +3,14 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { parseAgentEvent } from "@/gateway/event-parser";
 import { localPersistence } from "@/lib/local-persistence";
+import {
+  BOARD_AGENT_IDS,
+  BOARD_AGENT_NAMES,
+  BOARD_MEETING_SEATS,
+  POSITION_MAP,
+  isBoardAgent,
+} from "@/components/living-office/characters/constants";
+import type { BoardAgentId } from "@/components/living-office/characters/constants";
 
 enableMapSet();
 import type {
@@ -213,9 +221,42 @@ function activateFromLoungePlaceholder(
   }
 }
 
+function makeBoardAgent(id: BoardAgentId, seatIndex: number): VisualAgent {
+  const pos = POSITION_MAP[`board-lounge-${seatIndex}`] ?? { left: 730, top: 890 };
+  return {
+    id,
+    name: BOARD_AGENT_NAMES[id],
+    status: "idle",
+    position: { x: pos.left, y: pos.top },
+    currentTool: null,
+    speechBubble: null,
+    lastActiveAt: Date.now(),
+    toolCallCount: 0,
+    toolCallHistory: [],
+    runId: null,
+    isSubAgent: false,
+    isPlaceholder: false,
+    isStatic: true,
+    parentAgentId: null,
+    childAgentIds: [],
+    zone: "lounge" as const,
+    originalPosition: null,
+    movement: null,
+    confirmed: true,
+    arrivedAtHotDeskAt: null,
+    pendingRetire: false,
+  };
+}
+
 export const useOfficeStore = create<OfficeStore>()(
   immer((set) => ({
-    agents: new Map(),
+    agents: (() => {
+      const m = new Map<string, VisualAgent>();
+      BOARD_AGENT_IDS.forEach((id, i) => {
+        m.set(id, makeBoardAgent(id as BoardAgentId, i));
+      });
+      return m;
+    })(),
     links: [],
     globalMetrics: {
       activeAgents: 0,
@@ -261,6 +302,7 @@ export const useOfficeStore = create<OfficeStore>()(
     },
 
     removeAgent: (id: string) => {
+      if (isBoardAgent(id)) return; // board agents are permanent
       set((state) => {
         state.agents.delete(id);
         if (state.selectedAgentId === id) {
@@ -687,6 +729,11 @@ export const useOfficeStore = create<OfficeStore>()(
           state.agents.set(summary.id, agent);
         }
 
+        // Re-seed board agents (they are permanent, not from gateway)
+        BOARD_AGENT_IDS.forEach((id, i) => {
+          state.agents.set(id, makeBoardAgent(id as BoardAgentId, i));
+        });
+
         state.globalMetrics = computeMetrics(state.agents, state.globalMetrics);
       });
       // Prefill lounge with placeholder sub-agents
@@ -717,9 +764,10 @@ export const useOfficeStore = create<OfficeStore>()(
         }
 
         // Remove main agents that no longer exist in the summary,
-        // but never touch sub-agents, placeholders, or unconfirmed agents.
+        // but never touch sub-agents, placeholders, unconfirmed agents, or static board agents.
         for (const [id, agent] of state.agents) {
           if (!agent.isSubAgent && !agent.isPlaceholder && agent.confirmed && !incomingIds.has(id)) {
+            if (agent.isStatic) continue; // never remove static board agents
             state.agents.delete(id);
             if (state.selectedAgentId === id) state.selectedAgentId = null;
           }
@@ -1122,8 +1170,51 @@ export const useOfficeStore = create<OfficeStore>()(
         state.globalMetrics = computeMetrics(state.agents, state.globalMetrics);
       });
     },
+
+    boardQueryStart: (agentId: string) => {
+      set((state) => {
+        const toMove = agentId === "board-chairman"
+          ? [...BOARD_AGENT_IDS]
+          : (["board-chairman", agentId] as string[]);
+
+        toMove.forEach((id, i) => {
+          const agent = state.agents.get(id);
+          if (!agent) return;
+          const seat = BOARD_MEETING_SEATS[i] ?? BOARD_MEETING_SEATS[0];
+          agent.zone = "meeting";
+          agent.status = "thinking";
+          if (!agent.originalPosition) {
+            agent.originalPosition = { ...agent.position };
+          }
+          agent.position = { x: seat.left, y: seat.top };
+        });
+      });
+    },
+
+    boardQueryEnd: (agentId: string) => {
+      set((state) => {
+        const toReturn = agentId === "board-chairman"
+          ? [...BOARD_AGENT_IDS]
+          : (["board-chairman", agentId] as string[]);
+
+        toReturn.forEach((id) => {
+          const agent = state.agents.get(id);
+          if (!agent) return;
+          agent.zone = "lounge";
+          agent.status = "idle";
+          if (agent.originalPosition) {
+            agent.position = { ...agent.originalPosition };
+            agent.originalPosition = null;
+          }
+        });
+      });
+    },
   })),
 );
+
+if (typeof window !== "undefined") {
+  (window as Window & { __officeStore?: typeof useOfficeStore }).__officeStore = useOfficeStore;
+}
 
 setDeferredIdleCallback((agentId: string) => {
   useOfficeStore.getState().deferredSetIdle(agentId);

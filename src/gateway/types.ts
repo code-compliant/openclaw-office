@@ -174,6 +174,8 @@ export interface VisualAgent {
   arrivedAtHotDeskAt: number | null;
   /** Whether lifecycle end has been received but retirement is deferred */
   pendingRetire: boolean;
+  /** Whether this agent is a permanent static resident (e.g. board agent) */
+  isStatic?: boolean;
 }
 
 export interface ToolCallRecord {
@@ -342,6 +344,10 @@ export interface OfficeStore {
 
   // 指标
   updateMetrics: () => void;
+
+  // DEC Board Query
+  boardQueryStart: (agentId: string) => void;
+  boardQueryEnd: (agentId: string) => void;
 }
 
 // --- 错误 ---
@@ -373,4 +379,16 @@ export interface AgentsListResponse {
   mainKey: string;
   scope: string;
   agents: AgentSummary[];
+}
+
+// --- Board Query Events ---
+
+export interface BoardQueryStartEvent {
+  type: "board_query_start";
+  agent_id: string;
+}
+
+export interface BoardQueryEndEvent {
+  type: "board_query_end";
+  agent_id: string;
 }
