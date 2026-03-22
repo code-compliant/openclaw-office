@@ -20,6 +20,7 @@ function jsonResponse(data: unknown, status = 200) {
 }
 
 beforeEach(() => {
+  vi.stubEnv("VITE_CLAWHUB_REGISTRY", "https://test.clawhub.ai");
   mockFetch.mockReset();
   clearClawHubCache();
 });

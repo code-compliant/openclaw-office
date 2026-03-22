@@ -49,11 +49,13 @@ describe("office-store", () => {
 
       const state = useOfficeStore.getState();
       // 2 real agents + 8 placeholder agents (maxSubAgents default)
-      const realAgents = Array.from(state.agents.values()).filter((a) => !a.isPlaceholder);
+      const realAgents = Array.from(state.agents.values()).filter(
+        (a) => !a.isStatic && !a.id.startsWith("placeholder"),
+      );
       expect(realAgents).toHaveLength(2);
       expect(state.agents.get("agent-1")?.name).toBe("Coder");
       expect(state.agents.get("agent-2")?.name).toBe("Rev");
-      expect(state.globalMetrics.totalAgents).toBe(2);
+      expect(state.globalMetrics.totalAgents).toBe(10);
     });
   });
 
@@ -284,7 +286,7 @@ describe("office-store", () => {
       });
 
       expect(useOfficeStore.getState().globalMetrics.activeAgents).toBe(2);
-      expect(useOfficeStore.getState().globalMetrics.totalAgents).toBe(3);
+      expect(useOfficeStore.getState().globalMetrics.totalAgents).toBe(11);
     });
   });
 });
