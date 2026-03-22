@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isMockMode } from "@/gateway/adapter-provider";
+import type { VisualAgent } from "@/gateway/types";
 import { useProjectionStore } from "@/perception/projection-store";
 import type { AgentProjection } from "@/perception/types";
 import { useOfficeStore } from "@/store/office-store";
 import { useCronStore } from "@/store/console-stores/cron-store";
 import { AgentCharacter2D5 } from "./characters/AgentCharacter2D5";
-import { SUB_AGENT_SLOTS } from "./characters/constants";
+import { BOARD_AGENT_IDS, SUB_AGENT_SLOTS } from "./characters/constants";
 import { SubAgentGhost, allocateSubAgentSlots } from "./characters/SubAgentGhost";
 import { DESK_CONFIGS, CANVAS_W, CANVAS_H } from "./config";
 import type { DeskConfig } from "./types";
@@ -131,6 +132,9 @@ export function LivingOfficeView() {
   const agents = useProjectionStore((s) => s.agents);
   const connectionStatus = useOfficeStore((s) => s.connectionStatus);
   const engine = usePerceptionEngine();
+  const boardAgentEntries = useOfficeStore((s) =>
+    BOARD_AGENT_IDS.map((id) => s.agents.get(id)).filter(Boolean) as VisualAgent[]
+  );
   const autoPlayCleanup = useRef<(() => void) | null>(null);
   const stageContainerRef = useRef<HTMLDivElement>(null);
   const stageScale = useStageScale(stageContainerRef);
@@ -254,6 +258,17 @@ export function LivingOfficeView() {
               />
             );
           })}
+
+          {/* Board agents — permanent lounge/meeting residents */}
+          {boardAgentEntries.map((agent) => (
+            <SubAgentGhost
+              key={`board-${agent.id}`}
+              agentId={agent.id}
+              name={agent.name}
+              position={{ left: agent.position.x, top: agent.position.y }}
+              active
+            />
+          ))}
         </OfficeStage>
       </div>
     </div>
