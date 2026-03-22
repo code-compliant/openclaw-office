@@ -111,7 +111,10 @@ const DETAIL_CACHE_TTL = 300_000;
 const RATE_LIMIT_COOLDOWN = 5_000;
 
 function getBaseUrl(): string {
-  return import.meta.env.VITE_CLAWHUB_REGISTRY ?? "https://clawhub.ai";
+  // DEC: VITE_CLAWHUB_REGISTRY must be explicitly set — no default to external registry
+  const url = import.meta.env.VITE_CLAWHUB_REGISTRY;
+  if (!url) throw new ClawHubError(0, "ClawHub registry disabled");
+  return url;
 }
 
 // --- API helpers ---
