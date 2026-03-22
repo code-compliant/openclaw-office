@@ -82,6 +82,14 @@ export const POSITION_MAP: Record<string, Position2D> = {
   memory: { left: 1240, top: 590 },
   lounge: { left: 730, top: 770 },
   whiteboard: { left: 760, top: 145 },
+  "board-lounge-0": { left: 156, top: 890 },
+  "board-lounge-1": { left: 326, top: 890 },
+  "board-lounge-2": { left: 496, top: 890 },
+  "board-lounge-3": { left: 666, top: 890 },
+  "board-lounge-4": { left: 836, top: 890 },
+  "board-lounge-5": { left: 1006, top: 890 },
+  "board-lounge-6": { left: 1176, top: 890 },
+  "board-lounge-7": { left: 1346, top: 890 },
 };
 
 // --- 项目室 Sub-agent 坐标位 ---
@@ -106,6 +114,14 @@ export const LOUNGE_SOFA_POSITIONS: Position2D[] = [
   { left: 670, top: 810 },
   { left: 890, top: 810 },
   { left: 1110, top: 810 },
+  { left: 120, top: 890 },
+  { left: 290, top: 890 },
+  { left: 460, top: 890 },
+  { left: 630, top: 890 },
+  { left: 800, top: 890 },
+  { left: 970, top: 890 },
+  { left: 1140, top: 890 },
+  { left: 1310, top: 890 },
 ];
 
 export const MAX_SUB_AGENTS = 3;
@@ -115,3 +131,44 @@ export const MAX_SUB_AGENTS = 3;
 export const MOVE_DURATION_MS = 900;
 export const MOVE_EASING = "cubic-bezier(.25, .9, .2, 1)";
 export const WALK_BOB_DURATION = "0.5s";
+
+// --- DEC Board Agents ---
+
+export const BOARD_AGENT_IDS = [
+  "board-chairman",
+  "board-biz-ops",
+  "board-health",
+  "board-mental",
+  "board-relations",
+  "board-trainer",
+  "board-admin",
+  "board-improvement",
+] as const;
+
+export type BoardAgentId = (typeof BOARD_AGENT_IDS)[number];
+
+export const BOARD_AGENT_NAMES: Record<BoardAgentId, string> = {
+  "board-chairman": "Chairman",
+  "board-biz-ops": "Business Ops",
+  "board-health": "Health",
+  "board-mental": "Mental Health",
+  "board-relations": "Relationships",
+  "board-trainer": "Trainer",
+  "board-admin": "Admin/Legal",
+  "board-improvement": "Improvement",
+};
+
+export const isBoardAgent = (id: string): id is BoardAgentId =>
+  (BOARD_AGENT_IDS as readonly string[]).includes(id);
+
+// Board meeting seats (canvas coordinates 1600×920)
+export const BOARD_MEETING_SEATS: Position2D[] = [
+  { left: 1100, top: 370 },
+  { left: 1160, top: 340 },
+  { left: 1240, top: 330 },
+  { left: 1320, top: 340 },
+  { left: 1380, top: 370 },
+  { left: 1380, top: 430 },
+  { left: 1320, top: 460 },
+  { left: 1160, top: 460 },
+];

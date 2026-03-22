@@ -32,7 +32,7 @@ export const ZONE_CONFIGS: Record<string, ZoneConfig> = {
     id: "lounge-zone",
     label: "Lounge",
     position: { left: 30, top: 660 },
-    size: { width: 1400, height: 230 },
+    size: { width: 1400, height: 280 },
   },
   project: {
     id: "project-zone",
